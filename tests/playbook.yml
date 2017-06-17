@@ -1,0 +1,8 @@
+---
+- hosts: all
+  connection: local
+  tasks:
+    - napalm_get_facts:
+        dev_os: nxos
+        optional_args:
+          port: 8000

@@ -15,3 +15,4 @@ cache:
   pip:
   directories:
     - $HOME/.cache/pip
+before_script: python tests/http.py &

@@ -1,4 +1,8 @@
 language: python
+addons:
+  apt:
+    packages:
+      - sshpass
 python:
   - "2.7"
 install:

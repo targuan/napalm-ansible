@@ -6,4 +6,5 @@ install:
   - pip install napalm
   - pip install ansible
 # command to run tests
-script: cd tests && ansible playbook.yml -i hosts
+script: cd tests && ansible-playbook playbook.yml -i hosts
+cache: pip

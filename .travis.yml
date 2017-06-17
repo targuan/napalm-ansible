@@ -3,8 +3,12 @@ python:
   - "2.7"
 # command to install dependencies
 install:
+  - pip install -U wheel pip
   - pip install napalm
   - pip install ansible
 # command to run tests
 script: cd tests && p=`which python` && ansible-playbook playbook.yml -i hosts -e "ansible_python_interpreter=$p"
-cache: pip
+cache: 
+  pip:
+  directories:
+    - $HOME/.cache/pip

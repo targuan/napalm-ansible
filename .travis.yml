@@ -9,7 +9,7 @@ install:
   - pip install -U wheel pip
   - pip install napalm
   - pip install ansible
-script: cd tests && p=`which python` && sshpass -p test ansible-playbook playbook.yml -i hosts -e "ansible_python_interpreter=$p" -u test
+script: cd tests && p=`which python` && sshpass -p test ansible-playbook playbook.yml -i hosts -e "ansible_python_interpreter=$p" -u test -k
 cache: 
   pip:
   directories:

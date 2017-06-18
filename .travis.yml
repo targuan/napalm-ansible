@@ -35,8 +35,9 @@ script:
   - cd tests
   - interpreter=`which python`
   - sshpass -p test ansible-playbook playbook.yml -i hosts -e "ansible_python_interpreter=$interpreter" -u test -k
-  - ansible-playbook playbook.yml -i hosts -e "ansible_python_interpreter=$interpreter" -u test
-  - ansible-playbook playbook.yml -i hosts -e "ansible_python_interpreter=$interpreter"
+  - ansible-playbook playbook.yml -i hosts -e "ansible_python_interpreter=$interpreter ansible_password=test" -u test
+  - export ANSIBLE_REMOTE_USER = test
+  - ansible-playbook playbook.yml -i hosts -e "ansible_python_interpreter=$interpreter ansible_password=test"
 cache: 
   pip:
   directories:

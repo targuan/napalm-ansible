@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/targuan/napalm-ansible.svg?branch=feature/test)](https://travis-ci.org/targuan/napalm-ansible)
+
 napalm-ansible
 ======
 

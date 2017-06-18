@@ -32,11 +32,11 @@ install:
   - pip install ansible==$ANSIBLE_VERSION
   - pip install -e git+https://github.com/targuan/napalm-dummy.git#egg=napalm-dummy
 script: 
-  - cd tests
+  - cd tests/integration
   - interpreter=`which python`
   - sshpass -p test ansible-playbook playbook.yml -i hosts -e "ansible_python_interpreter=$interpreter" -u test -k
   - ansible-playbook playbook.yml -i hosts -e "ansible_python_interpreter=$interpreter ansible_password=test" -u test
-  - export ANSIBLE_REMOTE_USER = test
+  - export ANSIBLE_REMOTE_USER=test
   - ansible-playbook playbook.yml -i hosts -e "ansible_python_interpreter=$interpreter ansible_password=test"
 cache: 
   pip:

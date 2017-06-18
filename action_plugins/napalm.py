@@ -7,7 +7,8 @@ import time
 import glob
 
 from ansible.plugins.action.normal import ActionModule as _ActionModule
-from pprint import pprint
+
+import ansible.constants as C
 
 class ActionModule(_ActionModule):
     def run(self, tmp=None, task_vars=None):
@@ -20,7 +21,8 @@ class ActionModule(_ActionModule):
         if hasattr(pc, 'connection_user'):
             provider['username'] = provider.get('username', pc.connection_user)
         else:
-            provider['username'] = provider.get('username', pc.remote_user)
+            # don't use pc.remote_user as this has been overwriten due to connection local
+            provider['username'] = provider.get('username', C.DEFAULT_REMOTE_USER) or pc.remote_user
         provider['password'] = provider.get('password', pc.password)
         provider['timeout'] = provider.get('timeout', pc.timeout)
 

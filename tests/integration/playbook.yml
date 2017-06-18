@@ -9,3 +9,6 @@
           empty:
         optional_args:
           port: 8000
+      register: facts
+    - debug:
+        var: facts

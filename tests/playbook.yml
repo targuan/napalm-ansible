@@ -4,5 +4,8 @@
   tasks:
     - napalm_get_facts:
         dev_os: dummy
+        ignore_notimplemented: true
+        args:
+          empty:
         optional_args:
           port: 8000

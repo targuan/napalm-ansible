@@ -12,9 +12,11 @@ install:
   - pip install -U wheel pip
   - pip install napalm
   - pip install ansible==$ANSIBLE_VERSION
-script: cd tests && p=`which python` && sshpass -p test ansible-playbook playbook.yml -i hosts -e "ansible_python_interpreter=$p" -u test -k
+  - pip install -e git+https://github.com/targuan/napalm-dummy.git
+script: 
+  - cd tests && p=`which python` && sshpass -p test ansible-playbook playbook.yml -i hosts -e "ansible_python_interpreter=$p" -u test -k
+  - cd tests && p=`which python` && test ansible-playbook playbook.yml -i hosts -e "ansible_python_interpreter=$p" -u test
 cache: 
   pip:
   directories:
     - $HOME/.cache/pip
-before_script: python tests/http.py &

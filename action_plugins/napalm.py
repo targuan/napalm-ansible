@@ -16,7 +16,11 @@ class ActionModule(_ActionModule):
         provider = self._task.args.get('provider', {})
 
         provider['hostname'] = provider.get('hostname', provider.get('host', pc.remote_addr))
-        provider['username'] = provider.get('username', pc.connection_user)
+
+        if hasattr(pc, 'connection_user'):
+            provider['username'] = provider.get('username', pc.connection_user)
+        else:
+            provider['username'] = provider.get('username', pc.remote_user)
         provider['password'] = provider.get('password', pc.password)
         provider['timeout'] = provider.get('timeout', pc.timeout)
 

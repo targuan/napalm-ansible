@@ -7,10 +7,11 @@ import time
 import glob
 
 from ansible.plugins.action.normal import ActionModule as _ActionModule
+from ansible.plugins.action import ActionBase
 
 import ansible.constants as C
 
-class ActionModule(_ActionModule):
+class ActionModule(_ActionModule, ActionBase):
     def run(self, tmp=None, task_vars=None):
         pc = self._play_context
 

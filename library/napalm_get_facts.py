@@ -162,8 +162,8 @@ def main():
             dev_os=dict(type='str', required=False, choices=os_choices),
             timeout=dict(type='int', required=False, default=60),
             ignore_notimplemented=dict(type='bool', required=False, default=False),
-            args=dict(type='dict', required=False, default=None),
-            optional_args=dict(type='dict', required=False, default=None),
+            args=dict(type='dict', required=False, default={}),
+            optional_args=dict(type='dict', required=False, default={}),
             filter=dict(type='list', required=False, default=['facts']),
 
         ),
@@ -188,7 +188,8 @@ def main():
     password = module.params['password']
     timeout = module.params['timeout']
     filter_list = module.params['filter']
-    args = module.params.get('args', {})
+    args = module.params['args']
+    optional_args = module.params['optional_args']
     ignore_notimplemented = module.params['ignore_notimplemented']
     implementation_errors = []
 
@@ -201,11 +202,6 @@ def main():
     # use checks outside of ansible defined checks, since params come can come from provider
     if dev_os not in os_choices:
         module.fail_json(msg="dev_os is not set to " + str(os_choices))
-
-    if module.params['optional_args'] is None:
-        optional_args = {}
-    else:
-        optional_args = module.params['optional_args']
 
     # open device connection
     try:

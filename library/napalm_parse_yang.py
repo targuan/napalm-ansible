@@ -64,10 +64,8 @@ options:
         required: False
     dev_os:
         description:
-          - OS of the device
+          - OS of the device, must be a valid Napalm driver
         required: False
-        choices: ['eos', 'junos', 'iosxr', 'fortios', 'ibm', 'ios', 'nxos',
-                  'panos', 'vyos']
     provider:
         description:
           - Dictionary which acts as a collection of arguments used to define
@@ -187,13 +185,14 @@ def parse_from_file(module):
     return root
 
 
-def parse_from_device(module, os_choices):
+def parse_from_device(module):
     update_module_provider_data(module)
 
     hostname = module.params['hostname']
     username = module.params['username']
     password = module.params['password']
     timeout = module.params['timeout']
+    optional_args = module.params['optional_args']
     models = module.params['models']
     mode = module.params['mode']
     profiles = module.params['profiles']
@@ -205,19 +204,14 @@ def parse_from_device(module, os_choices):
         if val is None:
             module.fail_json(msg=str(key) + " is required")
 
-    # use checks outside of ansible defined checks, since params come can come
-    # from provider
-    dev_os = module.params['dev_os']
-    if dev_os not in os_choices:
-        module.fail_json(msg="dev_os is not set to " + str(os_choices))
-
-    if module.params['optional_args'] is None:
-        optional_args = {}
-    else:
-        optional_args = module.params['optional_args']
-
+    # load napalm driver
     try:
         network_driver = get_network_driver(dev_os)
+    except ModuleImportError, e:
+        module.fail_json(msg=e.message)
+
+    # open device connection
+    try:
         device = network_driver(hostname=hostname,
                                 username=username,
                                 password=password,
@@ -245,8 +239,6 @@ def parse_from_device(module, os_choices):
 
 
 def main():
-    os_choices = ['eos', 'junos', 'iosxr', 'fortios', 'ibm', 'ios',
-                  'nxos', 'panos', 'vyos']
     module = AnsibleModule(
         argument_spec=dict(
             hostname=dict(type='str', required=False, aliases=['host']),
@@ -258,9 +250,9 @@ def main():
                       choices=["config", "state", "both"]),
             models=dict(type="list", required=True),
             profiles=dict(type="list", required=False),
-            dev_os=dict(type='str', required=False, choices=os_choices),
+            dev_os=dict(type='str', required=False, default=None),
             timeout=dict(type='int', required=False, default=60),
-            optional_args=dict(type='dict', required=False, default=None),
+            optional_args=dict(type='dict', required=False, default={}),
 
         ),
         supports_check_mode=True
@@ -274,7 +266,7 @@ def main():
     if module.params["file_path"]:
         yang_model = parse_from_file(module)
     else:
-        yang_model = parse_from_device(module, os_choices)
+        yang_model = parse_from_device(module)
 
     module.exit_json(yang_model=yang_model.to_dict(filter=True))
 

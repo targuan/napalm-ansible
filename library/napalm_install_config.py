@@ -55,9 +55,8 @@ options:
         required: False
     dev_os:
         description:
-          - OS of the device
+          - OS of the device, must be a valid Napalm driver
         required: False
-        choices: ['eos', 'junos', 'iosxr', 'fortios', 'ibm', 'ios', 'nxos', 'panos', 'vyos']
     timeout:
         description:
           - Time in seconds to wait for the device to respond
@@ -174,7 +173,6 @@ def save_to_file(content, filename):
         f.close()
 
 def main():
-    os_choices = ['eos', 'junos', 'iosxr', 'fortios', 'ibm', 'ios', 'nxos', 'panos', 'vyos', 'ros']
     module = AnsibleModule(
         argument_spec=dict(
             hostname=dict(type='str', required=False, aliases=['host']),
@@ -182,10 +180,10 @@ def main():
             password=dict(type='str', required=False, no_log=True),
             provider=dict(type='dict', required=False, no_log=True),
             timeout=dict(type='int', required=False, default=60),
-            optional_args=dict(required=False, type='dict', default=None),
+            optional_args=dict(required=False, type='dict', default={}),
             config_file=dict(type='str', required=False),
             config=dict(type='str', required=False),
-            dev_os=dict(type='str', required=False, choices=os_choices),
+            dev_os=dict(type='str', required=False, default=None),
             commit_changes=dict(type='bool', required=True),
             replace_config=dict(type='bool', required=False, default=False),
             diff_file=dict(type='str', required=False, default=None),
@@ -212,6 +210,7 @@ def main():
     dev_os = module.params['dev_os']
     password = module.params['password']
     timeout = module.params['timeout']
+    optional_args = module.params['optional_args']
     config_file = module.params['config_file']
     config = module.params['config']
     commit_changes = module.params['commit_changes']
@@ -225,17 +224,14 @@ def main():
         if val is None:
             module.fail_json(msg=str(key) + " is required")
 
-    # use checks outside of ansible defined checks, since params come can come from provider
-    if dev_os not in os_choices:
-        module.fail_json(msg="dev_os is not set to " + str(os_choices))
-
-    if module.params['optional_args'] is None:
-        optional_args = {}
-    else:
-        optional_args = module.params['optional_args']
-
+    # load napalm driver
     try:
         network_driver = get_network_driver(dev_os)
+    except ModuleImportError, e:
+        module.fail_json(msg=e.message)
+
+    # open device connection
+    try:
         device = network_driver(hostname=hostname,
                                 username=username,
                                 password=password,

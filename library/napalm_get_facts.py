@@ -45,9 +45,8 @@ options:
         required: False
     dev_os:
         description:
-          - OS of the device
+          - OS of the device, must be a valid Napalm driver
         required: False
-        choices: ['eos', 'junos', 'iosxr', 'fortios', 'ibm', 'ios', 'nxos', 'panos', 'vyos']
     provider:
         description:
           - Dictionary which acts as a collection of arguments used to define the characteristics
@@ -144,7 +143,7 @@ ansible_facts:
 '''
 
 try:
-    from napalm_base import get_network_driver
+    from napalm_base import get_network_driver, ModuleImportError
 except ImportError:
     napalm_found = False
 else:
@@ -152,14 +151,13 @@ else:
 
 
 def main():
-    os_choices = ['eos', 'junos', 'iosxr', 'fortios', 'ibm', 'ios', 'nxos', 'panos', 'vyos', 'ros']
     module = AnsibleModule(
         argument_spec=dict(
             hostname=dict(type='str', required=False, aliases=['host']),
             username=dict(type='str', required=False),
             password=dict(type='str', required=False, no_log=True),
             provider=dict(type='dict', required=False, no_log=True),
-            dev_os=dict(type='str', required=False, choices=os_choices),
+            dev_os=dict(type='str', required=False, default=None),
             timeout=dict(type='int', required=False, default=60),
             ignore_notimplemented=dict(type='bool', required=False, default=False),
             args=dict(type='dict', required=False, default={}),
@@ -198,14 +196,15 @@ def main():
     for key, val in argument_check.items():
         if val is None:
             module.fail_json(msg=str(key) + " is required")
-
-    # use checks outside of ansible defined checks, since params come can come from provider
-    if dev_os not in os_choices:
-        module.fail_json(msg="dev_os is not set to " + str(os_choices))
+    
+    # load napalm driver
+    try:
+        network_driver = get_network_driver(dev_os)
+    except ModuleImportError, e:
+        module.fail_json(msg=e.message)
 
     # open device connection
     try:
-        network_driver = get_network_driver(dev_os)
         device = network_driver(hostname=hostname,
                                 username=username,
                                 password=password,

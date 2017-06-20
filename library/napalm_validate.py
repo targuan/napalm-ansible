@@ -38,10 +38,8 @@ options:
         required: False
     dev_os:
         description:
-          - OS of the device.
+          - OS of the device, must be a valid Napalm driver
         required: False
-        choices: ['eos', 'junos', 'iosxr', 'fortios', 'ibm', 'ios', 'nxos',
-                  'panos', 'vyos']
     provider:
         description:
           - Dictionary which acts as a collection of arguments used to define
@@ -137,7 +135,7 @@ def get_compliance_report(module, device):
     return device.compliance_report(module.params['validation_file'])
 
 
-def get_device_instance(module, os_choices):
+def get_device_instance(module):
 
     provider = module.params['provider'] or {}
 
@@ -154,6 +152,7 @@ def get_device_instance(module, os_choices):
     dev_os = module.params['dev_os']
     password = module.params['password']
     timeout = module.params['timeout']
+    optional_args = module.params['optional_args']
 
     argument_check = {'hostname': hostname, 'username': username,
                       'dev_os': dev_os, 'password': password}
@@ -161,14 +160,14 @@ def get_device_instance(module, os_choices):
         if val is None:
             module.fail_json(msg=str(key) + " is required")
 
-    # use checks outside of ansible defined checks,
-    # since params come can come from provider
-    if dev_os not in os_choices:
-        module.fail_json(msg="dev_os is not set to " + str(os_choices))
-
-    optional_args = module.params['optional_args'] or {}
+    # load napalm driver
     try:
         network_driver = get_network_driver(dev_os)
+    except ModuleImportError, e:
+        module.fail_json(msg=e.message)
+
+    # open device connection
+    try:
         device = network_driver(hostname=hostname,
                                 username=username,
                                 password=password,
@@ -196,8 +195,6 @@ def get_root_object(models):
 
 
 def main():
-    os_choices = ['eos', 'junos', 'iosxr', 'fortios', 'ibm',
-                  'ios', 'nxos', 'panos', 'vyos']
     module = AnsibleModule(
         argument_spec=dict(
             models=dict(type="list", required=False),
@@ -206,9 +203,9 @@ def main():
             username=dict(type='str', required=False),
             password=dict(type='str', required=False, no_log=True),
             provider=dict(type='dict', required=False, no_log=True),
-            dev_os=dict(type='str', required=False, choices=os_choices),
+            dev_os=dict(type='str', required=False, default=None),
             timeout=dict(type='int', required=False, default=60),
-            optional_args=dict(type='dict', required=False, default=None),
+            optional_args=dict(type='dict', required=False, default={}),
             validation_file=dict(type='str', required=True),
         ),
         supports_check_mode=False
@@ -227,7 +224,7 @@ def main():
 
         device.load_dict(module.params["data"])
     else:
-        device = get_device_instance(module, os_choices)
+        device = get_device_instance(module)
     compliance_report = get_compliance_report(module, device)
 
     if not module.params["models"]:

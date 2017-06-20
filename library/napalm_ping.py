@@ -143,7 +143,7 @@ def main():
             provider=dict(type='dict', required=False, no_log=True),
             timeout=dict(type='int', required=False, default=60),
             optional_args=dict(required=False, type='dict', default={}),
-            dev_os=dict(type='str', required=False, default: None),
+            dev_os=dict(type='str', required=False, default=None),
             destination=dict(type='str', required=True),
             source=dict(type='str', required=False),
             ttl=dict(type='str', required=False),

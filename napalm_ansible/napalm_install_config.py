@@ -56,8 +56,6 @@ options:
         description:
           - OS of the device
         required: False
-        choices: ['eos', 'junos', 'iosxr', 'fortios', 'ios', 'mock', 'nxos', 'nxos_ssh', 'panos',
-        'vyos']
     timeout:
         description:
           - Time in seconds to wait for the device to respond
@@ -162,6 +160,7 @@ msg:
 
 try:
     from napalm_base import get_network_driver
+    from napalm_base.exceptions import ModuleImportError
 except ImportError:
     napalm_found = False
 else:
@@ -177,8 +176,6 @@ def save_to_file(content, filename):
 
 
 def main():
-    os_choices = ['eos', 'junos', 'iosxr', 'fortios', 'ios', 'mock', 'nxos',
-                  'nxos_ssh', 'panos', 'vyos', 'ros']
     module = AnsibleModule(
         argument_spec=dict(
             hostname=dict(type='str', required=False, aliases=['host']),
@@ -189,7 +186,7 @@ def main():
             optional_args=dict(required=False, type='dict', default=None),
             config_file=dict(type='str', required=False),
             config=dict(type='str', required=False),
-            dev_os=dict(type='str', required=False, choices=os_choices),
+            dev_os=dict(type='str', required=False),
             commit_changes=dict(type='bool', required=True),
             replace_config=dict(type='bool', required=False, default=False),
             diff_file=dict(type='str', required=False, default=None),
@@ -239,10 +236,6 @@ def main():
         if val is None:
             module.fail_json(msg=str(key) + " is required")
 
-    # use checks outside of ansible defined checks, since params come can come from provider
-    if dev_os not in os_choices:
-        module.fail_json(msg="dev_os is not set to " + str(os_choices))
-
     if module.params['optional_args'] is None:
         optional_args = {}
     else:
@@ -256,6 +249,8 @@ def main():
                                 timeout=timeout,
                                 optional_args=optional_args)
         device.open()
+    except ModuleImportError, e:
+        module.fail_json(msg="No driver found for {}: {}".format(dev_os, str(e)))
     except Exception, e:
         module.fail_json(msg="cannot connect to device: " + str(e))
 

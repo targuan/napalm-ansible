@@ -167,6 +167,7 @@ msg:
     sample: "[edit system]\n-  host-name lab-testing;\n+  host-name lab;"
 '''
 
+import re
 napalm_found = False
 try:
     from napalm import get_network_driver
@@ -176,10 +177,33 @@ except ImportError:
     pass
 
 
+
 def save_to_file(content, filename):
     with open(filename, 'w') as f:
         f.write(content)
 
+def compute_diff(driver_diff):
+    re_add_line = re.compile(r"^\s*\+")
+    re_sub_line = re.compile(r"^\s*-")
+    before = []
+    after = []
+    diff_format = False
+    for line in driver_diff.split("\n"):
+        if re_sub_line.match(line):
+            diff_format = True
+            command = line.replace("-", "", 1)
+            before.append(command)
+        elif re_add_line.match(line):
+            diff_format = True
+            command = line.replace("+", "", 1)
+            after.append(command)
+        else:
+            before.append(line)
+            after.append(line)
+    if diff_format:
+        return {"before": "\n".join(before), "after": "\n".join(after)}
+    else:
+        return {"before": "", "after": "\n".join(after)}
 
 def main():
     module = AnsibleModule(
@@ -326,7 +350,7 @@ def main():
     except Exception as e:
         module.fail_json(msg="cannot close device connection: " + str(e))
 
-    module.exit_json(changed=changed, msg=diff)
+    module.exit_json(changed=changed, msg=diff, diff=compute_diff(diff))
 
 
 if __name__ == '__main__':
